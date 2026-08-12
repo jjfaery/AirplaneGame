@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>飞机棋 Flying Chess</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">✈️ 飞机棋 <span class="brand-sub">Flying Chess</span></div>
+</header>
+
+<main id="app">
+
+  <!-- HOME -->
+  <section id="view-home" class="view">
+    <div class="card">
+      <h1>Play Flying Chess</h1>
+      <p class="muted">Race your 4 planes home. Play solo against the computer, or invite friends to a room.</p>
+
+      <label class="field">
+        <span>Your name</span>
+        <input id="input-name" type="text" maxlength="20" placeholder="Pilot name">
+      </label>
+
+      <h2 class="section-title">Quick Start</h2>
+      <div class="mode-grid">
+        <button class="mode-btn" data-target="1">
+          <strong>Solo</strong>
+          <span>You + 3 computer</span>
+        </button>
+        <button class="mode-btn" data-target="2">
+          <strong>2 Players</strong>
+          <span>2 people + 2 computer</span>
+        </button>
+        <button class="mode-btn" data-target="3">
+          <strong>3 Players</strong>
+          <span>3 people + 1 computer</span>
+        </button>
+        <button class="mode-btn" data-target="4">
+          <strong>4 Players</strong>
+          <span>No computer players</span>
+        </button>
+      </div>
+      <p class="muted small">Modes with more than 1 human create a room you can invite friends to — and you can always start early and let the computer fill empty seats.</p>
+
+      <h2 class="section-title">Have a room code?</h2>
+      <div class="join-row">
+        <input id="input-join-code" type="text" maxlength="5" placeholder="ROOM CODE" autocapitalize="characters">
+        <button id="btn-join" class="btn">Join</button>
+      </div>
+      <p id="home-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="view-lobby" class="view hidden">
+    <div class="card">
+      <h1>Room <span id="lobby-code" class="code"></span></h1>
+      <p class="muted">Share this link to invite players. The host can start any time — empty seats fill with computer players.</p>
+      <div class="join-row">
+        <input id="lobby-link" type="text" readonly>
+        <button id="btn-copy-link" class="btn">Copy</button>
+      </div>
+
+      <div id="lobby-seats" class="seats"></div>
+
+      <div class="lobby-actions">
+        <button id="btn-start" class="btn btn-primary hidden">Start Now</button>
+        <span id="lobby-wait-msg" class="muted"></span>
+        <button id="btn-leave-lobby" class="btn btn-ghost">Leave</button>
+      </div>
+      <p id="lobby-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="view-game" class="view hidden">
+    <div class="game-layout">
+      <div class="board-col">
+        <div class="board-wrap">
+          <canvas id="board-canvas"></canvas>
+          <div id="winner-banner" class="winner-banner hidden">
+            <div class="winner-card">
+              <div id="winner-text"></div>
+              <button id="btn-play-again" class="btn btn-primary">Back to Home</button>
+            </div>
+          </div>
+        </div>
+        <div class="dice-row">
+          <div id="dice-face" class="dice-face">–</div>
+          <button id="btn-roll" class="btn btn-primary" disabled>Roll Dice</button>
+          <div id="turn-indicator" class="turn-indicator"></div>
+        </div>
+      </div>
+      <div class="side-col">
+        <div id="players-panel" class="players-panel"></div>
+        <div id="game-log" class="game-log"></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/board.js"></script>
+<script src="/js/renderer.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
