@@ -89,7 +89,7 @@
   })();
 
   // ---------- LOBBY ----------
-  const COLOR_HEX = { red: '#e5484d', green: '#30a46c', blue: '#3b82f6', yellow: '#f5b400' };
+  const COLOR_HEX = window.AirplaneBoard.COLOR_HEX;
 
   function renderLobby() {
     if (!latestRoomView) return;
@@ -158,10 +158,9 @@
   }
 
   // ---------- GAME ----------
-  const canvas = document.getElementById('board-canvas');
-  renderer = new window.BoardRenderer(canvas);
-  window.addEventListener('resize', () => {
-    renderer.resize();
+  const pieceLayer = document.getElementById('piece-layer');
+  renderer = new window.BoardRenderer(pieceLayer);
+  window.AirplaneBoard.ready.then(() => {
     if (latestGameView) renderer.draw(latestGameView, myPlayerIndex());
   });
 
@@ -177,6 +176,26 @@
 
   document.getElementById('btn-roll').addEventListener('click', () => {
     socket.emit('game:roll', { code: currentRoomCode }, () => {});
+  });
+
+  document.getElementById('btn-gas-shortcut').addEventListener('click', () => {
+    const v = latestGameView;
+    if (!v || !v.awaitingGasChoice) return;
+    socket.emit('game:gasChoice', {
+      code: currentRoomCode,
+      planeIndex: v.awaitingGasChoice.planeIdx,
+      useShortcut: true,
+    }, () => {});
+  });
+
+  document.getElementById('btn-gas-normal').addEventListener('click', () => {
+    const v = latestGameView;
+    if (!v || !v.awaitingGasChoice) return;
+    socket.emit('game:gasChoice', {
+      code: currentRoomCode,
+      planeIndex: v.awaitingGasChoice.planeIdx,
+      useShortcut: false,
+    }, () => {});
   });
 
   document.getElementById('btn-play-again').addEventListener('click', () => {
@@ -195,18 +214,26 @@
 
     const myIdx = myPlayerIndex();
     const isMyTurn = v.currentPlayer === myIdx && v.gamePhase === 'playing';
+    const gasPending = !!v.awaitingGasChoice;
     const rollBtn = document.getElementById('btn-roll');
-    rollBtn.disabled = !(isMyTurn && !v.diceRolled);
+    rollBtn.disabled = !(isMyTurn && !v.diceRolled && !gasPending);
 
     const current = v.players[v.currentPlayer];
     const turnEl = document.getElementById('turn-indicator');
     if (v.gamePhase === 'finished') {
       turnEl.textContent = '';
+    } else if (gasPending) {
+      turnEl.textContent = isMyTurn
+        ? 'Gas station! Choose below.'
+        : `${current.name} is deciding at the gas station…`;
     } else if (isMyTurn) {
       turnEl.textContent = v.diceRolled ? 'Your turn — pick a plane to move' : 'Your turn — roll the dice';
     } else {
       turnEl.textContent = `${current.name}'s turn${current.isAI ? ' (computer)' : ''}…`;
     }
+
+    const gasEl = document.getElementById('gas-choice');
+    gasEl.classList.toggle('hidden', !(gasPending && isMyTurn));
 
     const panel = document.getElementById('players-panel');
     panel.innerHTML = '';

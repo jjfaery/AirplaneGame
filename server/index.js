@@ -52,6 +52,13 @@ io.on('connection', (socket) => {
     cb && cb({ ok: true });
   });
 
+  socket.on('game:gasChoice', ({ code, planeIndex, useShortcut } = {}, cb) => {
+    const result = rooms.gasChoice(socket, code, planeIndex, useShortcut);
+    if (result.error) return cb && cb({ ok: false, error: result.error });
+    rooms.broadcastGame(result.room);
+    cb && cb({ ok: true });
+  });
+
   socket.on('room:leave', () => {
     rooms.leave(socket);
   });

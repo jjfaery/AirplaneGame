@@ -81,7 +81,10 @@
     <div class="game-layout">
       <div class="board-col">
         <div class="board-wrap">
-          <canvas id="board-canvas"></canvas>
+          <div id="board-stage" class="board-stage">
+            <img id="board-img" class="board-img" src="/assets/board.svg" alt="">
+            <div id="piece-layer" class="piece-layer"></div>
+          </div>
           <div id="winner-banner" class="winner-banner hidden">
             <div class="winner-card">
               <div id="winner-text"></div>
@@ -93,6 +96,11 @@
           <div id="dice-face" class="dice-face">–</div>
           <button id="btn-roll" class="btn btn-primary" disabled>Roll Dice</button>
           <div id="turn-indicator" class="turn-indicator"></div>
+        </div>
+        <div id="gas-choice" class="gas-choice hidden">
+          <span class="gas-choice-label">⛽ Gas station! Take the shortcut?</span>
+          <button id="btn-gas-shortcut" class="btn btn-primary">Take shortcut</button>
+          <button id="btn-gas-normal" class="btn btn-ghost">Normal route</button>
         </div>
       </div>
       <div class="side-col">

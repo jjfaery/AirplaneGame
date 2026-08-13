@@ -3,7 +3,7 @@
 const engine = require('./game/engine');
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
-const COLOR_LABEL = { red: '红色', green: '绿色', blue: '蓝色', yellow: '黄色' };
+const COLOR_LABEL = { orange: '橙色', green: '绿色', red: '红色', blue: '蓝色' };
 
 function genCode() {
   let s = '';
@@ -119,6 +119,21 @@ class RoomManager {
     return { room };
   }
 
+  gasChoice(socket, code, planeIndex, useShortcut) {
+    const room = this.rooms.get(code);
+    if (!room || room.phase !== 'playing') return { error: 'NOT_PLAYING' };
+    const game = room.game;
+    const player = game.players[game.currentPlayer];
+    if (player.id !== socket.id) return { error: 'NOT_YOUR_TURN' };
+    try {
+      engine.resolveGasChoice(game, planeIndex, !!useShortcut);
+    } catch (e) {
+      return { error: e.message };
+    }
+    this._scheduleAI(room);
+    return { room };
+  }
+
   _scheduleAI(room) {
     if (room.phase !== 'playing') return;
     const game = room.game;
@@ -134,6 +149,14 @@ class RoomManager {
       if (room.phase !== 'playing' || game.phase === 'finished') return;
       const p = game.players[game.currentPlayer];
       if (!(p.isAI || p.connected === false)) return;
+
+      if (game.awaitingGasChoice) {
+        const useShortcut = engine.chooseAIGasDecision();
+        engine.resolveGasChoice(game, game.awaitingGasChoice.planeIdx, useShortcut);
+        this.broadcastGame(room);
+        if (game.phase !== 'finished') this._scheduleAI(room);
+        return;
+      }
 
       if (!game.diceRolled) {
         engine.rollDice(game);
@@ -220,6 +243,7 @@ class RoomManager {
       dice: game.dice,
       diceRolled: game.diceRolled,
       legalMoves: game.legalMoves,
+      awaitingGasChoice: game.awaitingGasChoice,
       winner: game.winner,
       gamePhase: game.phase,
       log: game.log.slice(-30),
