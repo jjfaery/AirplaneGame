@@ -15,9 +15,9 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 const rooms = new RoomManager(io);
 
 io.on('connection', (socket) => {
-  socket.on('room:create', ({ name, humanTarget } = {}, cb) => {
+  socket.on('room:create', ({ name, humanTarget, color } = {}, cb) => {
     try {
-      const room = rooms.createRoom(socket, String(name || '').slice(0, 20), Number(humanTarget) || 1);
+      const room = rooms.createRoom(socket, String(name || '').slice(0, 20), Number(humanTarget) || 1, color);
       cb && cb({ ok: true, code: room.code, view: rooms.roomView(room) });
     } catch (e) {
       cb && cb({ ok: false, error: e.message });

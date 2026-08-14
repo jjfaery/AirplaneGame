@@ -18,17 +18,21 @@ class RoomManager {
     this.socketRoom = new Map(); // socketId -> code
   }
 
-  createRoom(socket, name, humanTarget) {
+  createRoom(socket, name, humanTarget, color) {
     humanTarget = Math.min(4, Math.max(1, humanTarget | 0));
     let code;
     do { code = genCode(); } while (this.rooms.has(code));
 
+    const hostColor = engine.COLORS.includes(color) ? color : engine.COLORS[0];
+    const remaining = engine.COLORS.filter((c) => c !== hostColor);
+
     const seats = [
-      { type: 'human', socketId: socket.id, name: name || 'Host', connected: true, color: engine.COLORS[0] },
+      { type: 'human', socketId: socket.id, name: name || 'Host', connected: true, color: hostColor },
     ];
     for (let i = 1; i < 4; i++) {
-      if (i < humanTarget) seats.push({ type: 'open', color: engine.COLORS[i] });
-      else seats.push({ type: 'ai', name: `电脑${i}`, color: engine.COLORS[i] });
+      const seatColor = remaining[i - 1];
+      if (i < humanTarget) seats.push({ type: 'open', color: seatColor });
+      else seats.push({ type: 'ai', name: `电脑${i}`, color: seatColor });
     }
 
     const room = {

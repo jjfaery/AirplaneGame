@@ -31,11 +31,31 @@
   // ---------- HOME ----------
   const homeError = document.getElementById('home-error');
 
+  let selectedColor = window.AirplaneBoard.COLORS[0];
+
+  function renderHomeColorSwatches() {
+    const wrap = document.getElementById('home-color-swatches');
+    wrap.innerHTML = '';
+    window.AirplaneBoard.COLORS.forEach((color) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'color-swatch' + (selectedColor === color ? ' selected' : '');
+      btn.style.background = window.AirplaneBoard.COLOR_HEX[color];
+      btn.title = color;
+      btn.addEventListener('click', () => {
+        selectedColor = color;
+        renderHomeColorSwatches();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+  renderHomeColorSwatches();
+
   document.querySelectorAll('.mode-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       homeError.textContent = '';
       const humanTarget = Number(btn.dataset.target);
-      socket.emit('room:create', { name: getName(), humanTarget }, (res) => {
+      socket.emit('room:create', { name: getName(), humanTarget, color: selectedColor }, (res) => {
         if (!res.ok) { homeError.textContent = 'Could not create room.'; return; }
         currentRoomCode = res.code;
         setUrlRoom(res.code);
