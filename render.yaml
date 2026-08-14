@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: airplane-chess
+    name: airplane-chess-classic
     env: node
     plan: free
     buildCommand: npm install
