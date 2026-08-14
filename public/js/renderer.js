@@ -44,11 +44,12 @@ class BoardRenderer {
         const x = item.pt.x + ox;
         const y = item.pt.y + oy;
         const isCurrent = gameView.currentPlayer === item.pIdx;
-        const movable = isLocalTurn && item.pIdx === localPlayerIndex &&
+        const finished = item.n === B.FINISHED_N;
+        const movable = !finished && isLocalTurn && item.pIdx === localPlayerIndex &&
           gameView.legalMoves.includes(item.planeIdx);
 
         const el = document.createElement('div');
-        el.className = 'plane-token' + (movable ? ' movable' : '') + (isCurrent ? ' current' : '');
+        el.className = 'plane-token' + (movable ? ' movable' : '') + (isCurrent ? ' current' : '') + (finished ? ' finished' : '');
         el.style.left = x + '%';
         el.style.top = y + '%';
         el.style.background = B.COLOR_HEX[item.color];

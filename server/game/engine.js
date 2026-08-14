@@ -4,44 +4,57 @@
 // Server-authoritative, no rendering concerns here — only abstract state.
 //
 // Each plane's progress is tracked as a single integer `n`:
-//   n === 0            -> parked in hangar
-//   n === -1           -> on the "ready" pad, just outside the shared track
-//   1 <= n <= 51       -> on the shared 52-cell outer ring
-//   52 <= n <= 57      -> on this color's private 6-cell home stretch
-//   n === 58           -> landed home (finished)
+//   n === 0                    -> parked in hangar
+//   n === -1                   -> on the "ready" pad, just outside the shared track
+//   1 <= n <= RING_SPAN        -> on the shared 52-cell outer ring
+//   RING_SPAN < n <= RING_SPAN+HOME_SPAN -> on this color's private 6-cell home stretch
+//   n === FINISHED_N           -> landed home (finished)
 //
 // Leaving the hangar takes a 6 (hangar -> ready pad). From the ready pad,
-// any roll launches onto the ring, landing `dice` cells past the launch
-// cell (n === dice). A color's ring position for a given n is
-// (launchIndex + n - 1) mod 52.
+// any roll launches onto the ring, landing `dice` cells past the color's
+// entry point (n === dice). A color's absolute ring position for a given
+// n is (launchIndex + n - 1) mod 52 — verified directly against the real
+// board artwork (each color's ready pad connects to a specific absolute
+// ring cell; LAUNCH_INDEX below is that cell, 0-indexed).
 //
-// Every 4th ring cell belongs to a given color (a cell's owner is
-// determined purely by n mod 4, which is the same for every color since
-// each one's own n=1 is, by construction, one of its own cells). Landing
-// on your own color auto-advances 4 more cells. The cell at relative n=5
-// is additionally a gas-station trigger: instead of auto-advancing,
-// the player chooses between the shortcut (fly to relative n=17,
-// capturing anything on the relative n=3 flyover cell and the n=17
-// landing cell, then auto-advance 4 more) or declining (just the normal
-// +4, landing on relative n=9).
+// The ring's 52 cells are painted in a fixed repeating cycle — orange,
+// green, red, blue, one color per cell — confirmed by direct pixel
+// sampling of the board art. A player's own-color cells are therefore
+// every 4th relative n starting at n=2 (n=2,6,10,...,50): their entry
+// cell (n=1) is deliberately NOT their own color (it's the previous
+// color in the cycle), matching the real board. Landing on an own-color
+// cell auto-advances 4 more. n=50 is always a color's own-color cell
+// AND the branch into their home stretch, so a mandatory +4 there
+// carries the plane straight into the home lane.
+//
+// The gas-station trigger sits at relative n=18 for every color
+// (verified against the user's original absolute-cell description):
+// instead of auto-advancing, the player chooses between the shortcut
+// (fly to relative n=30, capturing anything on the relative n=16
+// flyover cell and the n=30 landing cell, then auto-advance 4 more)
+// or declining (just the normal +4, landing on relative n=22).
 
 const COLORS = ['orange', 'green', 'red', 'blue'];
-const LAUNCH_INDEX = { orange: 0, green: 13, red: 26, blue: 39 };
+const LAUNCH_INDEX = { green: 0, red: 13, blue: 26, orange: 39 };
 const SAFE_SQUARES = new Set(Object.values(LAUNCH_INDEX));
 const PLANES_PER_PLAYER = 4;
 const RING_SIZE = 52;
 
+const RING_SPAN = 50; // relative n range on the shared ring: 1..RING_SPAN
+const HOME_SPAN = 6; // relative n range in the home stretch: RING_SPAN+1..RING_SPAN+HOME_SPAN
+const FINISHED_N = RING_SPAN + HOME_SPAN + 1; // 57
+
 const OWN_COLOR_STEP = 4;
-const GAS_TRIGGER_N = 5;
-const GAS_FLYOVER_N = 3;
-const GAS_DESTINATION_N = 17;
+const GAS_TRIGGER_N = 18;
+const GAS_FLYOVER_N = 16;
+const GAS_DESTINATION_N = 30;
 
 function ringIndex(color, n) {
   return (LAUNCH_INDEX[color] + n - 1 + RING_SIZE) % RING_SIZE;
 }
 
 function isOwnColorN(n) {
-  return n >= 1 && n <= 51 && n % 4 === 1;
+  return n >= 1 && n <= RING_SPAN && n % 4 === 2;
 }
 
 function newPlane() {
@@ -85,8 +98,8 @@ function getLegalMoves(player, dice) {
       if (dice === 6) legal.push(i);
     } else if (plane.n === -1) {
       legal.push(i); // any roll launches from the ready pad
-    } else if (plane.n < 58) {
-      if (plane.n + dice <= 58) legal.push(i);
+    } else if (plane.n < FINISHED_N) {
+      if (plane.n + dice <= FINISHED_N) legal.push(i);
     }
   });
   return legal;
@@ -123,7 +136,7 @@ function captureAt(game, player, ringIdx) {
   for (const other of game.players) {
     if (other === player) continue;
     for (const op of other.planes) {
-      if (op.n >= 1 && op.n <= 51 && ringIndex(other.color, op.n) === ringIdx) {
+      if (op.n >= 1 && op.n <= RING_SPAN && ringIndex(other.color, op.n) === ringIdx) {
         op.n = 0;
         captured = true;
       }
@@ -133,7 +146,8 @@ function captureAt(game, player, ringIdx) {
 }
 
 // Resolve landing on `n` for a plane already known to be entering ring
-// space (1..51). Applies the mandatory own-color +4 once, then checks
+// space (1..RING_SPAN). Applies the mandatory own-color +4 once (which
+// may carry the plane past RING_SPAN into the home stretch), then checks
 // whether the result is the gas-station trigger. Returns either a final
 // n (move fully resolved) or a pending-choice descriptor.
 function resolveRingLanding(n) {
@@ -153,16 +167,16 @@ function finalizeLanding(game, player, plane, finalN) {
 
   plane.n = finalN;
 
-  if (plane.n === 58) {
+  if (plane.n === FINISHED_N) {
     justFinishedPlane = true;
     pushLog(game, `${player.name}'s plane landed home!`);
-  } else if (plane.n >= 1 && plane.n <= 51) {
+  } else if (plane.n >= 1 && plane.n <= RING_SPAN) {
     const idx = ringIndex(player.color, plane.n);
     captured = captureAt(game, player, idx);
     if (captured) pushLog(game, `${player.name} sent an opponent plane back to the hangar!`);
   }
 
-  const allHome = player.planes.every((p) => p.n === 58);
+  const allHome = player.planes.every((p) => p.n === FINISHED_N);
   if (allHome && !player.finished) {
     player.finished = true;
     game.phase = 'finished';
@@ -186,7 +200,7 @@ function applyMove(game, planeIdx) {
   if (plane.n === 0) {
     targetN = -1; // hangar -> ready pad
   } else if (plane.n === -1) {
-    targetN = dice; // ready pad -> ring entry, `dice` cells past the launch cell
+    targetN = dice; // ready pad -> ring entry, `dice` cells past the entry point
   } else {
     targetN = plane.n + dice;
   }
@@ -197,7 +211,7 @@ function applyMove(game, planeIdx) {
     return finishTurn(game, dice, false, false);
   }
 
-  if (targetN < 1 || targetN > 51) {
+  if (targetN < 1 || targetN > RING_SPAN) {
     // entering/advancing within home stretch or landing exactly home;
     // no own-color/gas-station rules apply off the shared ring
     const result = finalizeLanding(game, player, plane, targetN);
@@ -243,12 +257,15 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
 
   game.awaitingGasChoice = null;
 
-  const idx = ringIndex(player.color, plane.n);
-  if (plane.n <= 51 && captureAt(game, player, idx)) captured = true;
-
-  const allHome = player.planes.every((p) => p.n === 58);
   let justFinishedPlane = false;
-  if (plane.n === 58) justFinishedPlane = true;
+  if (plane.n === FINISHED_N) {
+    justFinishedPlane = true;
+  } else if (plane.n >= 1 && plane.n <= RING_SPAN) {
+    const idx = ringIndex(player.color, plane.n);
+    if (captureAt(game, player, idx)) captured = true;
+  }
+
+  const allHome = player.planes.every((p) => p.n === FINISHED_N);
   if (allHome && !player.finished) {
     player.finished = true;
     game.phase = 'finished';
@@ -306,15 +323,15 @@ function chooseAIMove(game) {
     let score = 0;
     const resultN = plane.n === 0 ? -1 : plane.n === -1 ? dice : plane.n + dice;
 
-    if (resultN === 58) score += 100;
+    if (resultN === FINISHED_N) score += 100;
 
-    if (resultN >= 1 && resultN <= 51) {
+    if (resultN >= 1 && resultN <= RING_SPAN) {
       const idx = ringIndex(player.color, resultN);
       if (!SAFE_SQUARES.has(idx)) {
         for (const other of game.players) {
           if (other === player) continue;
           for (const op of other.planes) {
-            if (op.n >= 1 && op.n <= 51 && ringIndex(other.color, op.n) === idx) {
+            if (op.n >= 1 && op.n <= RING_SPAN && ringIndex(other.color, op.n) === idx) {
               score += 50;
             }
           }
@@ -323,7 +340,7 @@ function chooseAIMove(game) {
     }
 
     if (plane.n === 0 && dice === 6) score += 20;
-    score += (resultN > 51 ? 51 : Math.max(resultN, 0)) * 0.2;
+    score += (resultN > RING_SPAN ? RING_SPAN : Math.max(resultN, 0)) * 0.2;
 
     return { i, score };
   });
@@ -344,6 +361,9 @@ module.exports = {
   SAFE_SQUARES,
   PLANES_PER_PLAYER,
   RING_SIZE,
+  RING_SPAN,
+  HOME_SPAN,
+  FINISHED_N,
   GAS_TRIGGER_N,
   GAS_FLYOVER_N,
   GAS_DESTINATION_N,

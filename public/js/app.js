@@ -311,7 +311,7 @@
       name.textContent = p.name + (p.isAI ? ' 🤖' : '') + (i === myIdx ? ' (you)' : '') + (!p.connected ? ' (offline)' : '');
       const progress = document.createElement('div');
       progress.className = 'player-progress';
-      const home = p.planes.filter((pl) => pl.n === 58).length;
+      const home = p.planes.filter((pl) => pl.n === window.AirplaneBoard.FINISHED_N).length;
       progress.textContent = `${home}/4 home`;
       row.appendChild(dot);
       row.appendChild(name);
