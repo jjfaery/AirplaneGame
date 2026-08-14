@@ -125,6 +125,26 @@
     document.getElementById('lobby-wait-msg').textContent = isHost
       ? (openCount > 0 ? `${openCount} seat(s) open — start now to fill with computer players.` : 'All seats filled.')
       : 'Waiting for the host to start the game…';
+
+    renderColorSwatches(v);
+  }
+
+  function renderColorSwatches(v) {
+    const wrap = document.getElementById('color-swatches');
+    wrap.innerHTML = '';
+    const mySeat = v.seats.find((s) => s.type === 'human' && s.socketId === socket.id);
+    window.AirplaneBoard.COLORS.forEach((color) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'color-swatch' + (mySeat && mySeat.color === color ? ' selected' : '');
+      btn.style.background = COLOR_HEX[color];
+      btn.title = color;
+      btn.disabled = !mySeat;
+      btn.addEventListener('click', () => {
+        socket.emit('room:chooseColor', { code: currentRoomCode, color }, () => {});
+      });
+      wrap.appendChild(btn);
+    });
   }
 
   document.getElementById('btn-copy-link').addEventListener('click', () => {
@@ -174,8 +194,31 @@
     socket.emit('game:move', { code: currentRoomCode, planeIndex }, () => {});
   };
 
+  const DICE_PIPS = {
+    1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9],
+  };
+
+  function setDiceFace(n) {
+    const active = new Set(DICE_PIPS[n] || []);
+    document.querySelectorAll('#dice-3d .pip').forEach((el) => {
+      el.classList.toggle('active', active.has(Number(el.dataset.pos)));
+    });
+  }
+
   document.getElementById('btn-roll').addEventListener('click', () => {
-    socket.emit('game:roll', { code: currentRoomCode }, () => {});
+    const rollBtn = document.getElementById('btn-roll');
+    const diceEl = document.getElementById('dice-3d');
+    rollBtn.disabled = true;
+    diceEl.classList.add('rolling');
+    const spinTimer = setInterval(() => setDiceFace(1 + Math.floor(Math.random() * 6)), 90);
+
+    socket.emit('game:roll', { code: currentRoomCode }, () => {
+      setTimeout(() => {
+        clearInterval(spinTimer);
+        diceEl.classList.remove('rolling');
+        renderGame();
+      }, 450);
+    });
   });
 
   document.getElementById('btn-gas-shortcut').addEventListener('click', () => {
@@ -204,13 +247,13 @@
     showView('home');
   });
 
-  const DICE_FACES = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-
   function renderGame() {
     const v = latestGameView;
     if (!v) return;
 
-    document.getElementById('dice-face').textContent = v.dice ? DICE_FACES[v.dice] : '–';
+    if (!document.getElementById('dice-3d').classList.contains('rolling')) {
+      setDiceFace(v.dice || 0);
+    }
 
     const myIdx = myPlayerIndex();
     const isMyTurn = v.currentPlayer === myIdx && v.gamePhase === 'playing';

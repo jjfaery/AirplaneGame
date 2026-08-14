@@ -24,11 +24,11 @@ class RoomManager {
     do { code = genCode(); } while (this.rooms.has(code));
 
     const seats = [
-      { type: 'human', socketId: socket.id, name: name || 'Host', connected: true },
+      { type: 'human', socketId: socket.id, name: name || 'Host', connected: true, color: engine.COLORS[0] },
     ];
     for (let i = 1; i < 4; i++) {
-      if (i < humanTarget) seats.push({ type: 'open' });
-      else seats.push({ type: 'ai', name: `电脑${i}` });
+      if (i < humanTarget) seats.push({ type: 'open', color: engine.COLORS[i] });
+      else seats.push({ type: 'ai', name: `电脑${i}`, color: engine.COLORS[i] });
     }
 
     const room = {
@@ -68,6 +68,27 @@ class RoomManager {
     this.socketRoom.set(socket.id, code);
   }
 
+  chooseColor(socket, code, color) {
+    const room = this.rooms.get(code);
+    if (!room) return { error: 'ROOM_NOT_FOUND' };
+    if (room.phase !== 'lobby') return { error: 'ALREADY_STARTED' };
+    if (!engine.COLORS.includes(color)) return { error: 'BAD_COLOR' };
+
+    const mySeat = room.seats.find((s) => s.type === 'human' && s.socketId === socket.id);
+    if (!mySeat) return { error: 'NOT_IN_ROOM' };
+
+    const otherSeat = room.seats.find((s) => s.color === color);
+    if (otherSeat && otherSeat !== mySeat) {
+      const tmp = otherSeat.color;
+      otherSeat.color = mySeat.color;
+      mySeat.color = tmp;
+    } else {
+      mySeat.color = color;
+    }
+
+    return { room };
+  }
+
   startGame(socket, code) {
     const room = this.rooms.get(code);
     if (!room) return { error: 'ROOM_NOT_FOUND' };
@@ -76,7 +97,7 @@ class RoomManager {
 
     room.seats.forEach((seat, i) => {
       if (seat.type === 'open') {
-        room.seats[i] = { type: 'ai', name: `电脑${i}` };
+        room.seats[i] = { type: 'ai', name: `电脑${i}`, color: seat.color };
       }
     });
 
@@ -84,6 +105,7 @@ class RoomManager {
       id: seat.type === 'human' ? seat.socketId : `ai-${Math.random().toString(36).slice(2)}`,
       name: seat.name,
       isAI: seat.type === 'ai',
+      color: seat.color,
     }));
 
     room.phase = 'playing';
@@ -223,9 +245,9 @@ class RoomManager {
       hostSocketId: room.hostSocketId,
       humanTarget: room.humanTarget,
       phase: room.phase,
-      seats: room.seats.map((s, i) => ({
-        color: engine.COLORS[i],
-        colorLabel: COLOR_LABEL[engine.COLORS[i]],
+      seats: room.seats.map((s) => ({
+        color: s.color,
+        colorLabel: COLOR_LABEL[s.color],
         type: s.type,
         name: s.name || null,
         connected: s.connected !== false,

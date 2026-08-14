@@ -10,8 +10,9 @@
 //   52 <= n <= 57      -> on this color's private 6-cell home stretch
 //   n === 58           -> landed home (finished)
 //
-// Launching takes two 6s: hangar -> ready (first 6), ready -> ring entry
-// (second 6). A color's ring position for a given n is
+// Leaving the hangar takes a 6 (hangar -> ready pad). From the ready pad,
+// any roll launches onto the ring, landing `dice` cells past the launch
+// cell (n === dice). A color's ring position for a given n is
 // (launchIndex + n - 1) mod 52.
 //
 // Every 4th ring cell belongs to a given color (a cell's owner is
@@ -51,7 +52,7 @@ function createGame(seats) {
   const players = seats.map((seat, i) => ({
     id: seat.id,
     name: seat.name,
-    color: COLORS[i],
+    color: seat.color || COLORS[i],
     isAI: !!seat.isAI,
     connected: true,
     planes: [newPlane(), newPlane(), newPlane(), newPlane()],
@@ -83,7 +84,7 @@ function getLegalMoves(player, dice) {
     if (plane.n === 0) {
       if (dice === 6) legal.push(i);
     } else if (plane.n === -1) {
-      if (dice === 6) legal.push(i);
+      legal.push(i); // any roll launches from the ready pad
     } else if (plane.n < 58) {
       if (plane.n + dice <= 58) legal.push(i);
     }
@@ -185,7 +186,7 @@ function applyMove(game, planeIdx) {
   if (plane.n === 0) {
     targetN = -1; // hangar -> ready pad
   } else if (plane.n === -1) {
-    targetN = 1; // ready pad -> ring entry
+    targetN = dice; // ready pad -> ring entry, `dice` cells past the launch cell
   } else {
     targetN = plane.n + dice;
   }
@@ -303,7 +304,7 @@ function chooseAIMove(game) {
   const scored = legal.map((i) => {
     const plane = player.planes[i];
     let score = 0;
-    const resultN = plane.n === 0 ? -1 : plane.n === -1 ? 1 : plane.n + dice;
+    const resultN = plane.n === 0 ? -1 : plane.n === -1 ? dice : plane.n + dice;
 
     if (resultN === 58) score += 100;
 

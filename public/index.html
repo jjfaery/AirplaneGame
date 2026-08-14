@@ -65,6 +65,11 @@
         <button id="btn-copy-link" class="btn">Copy</button>
       </div>
 
+      <div class="color-picker">
+        <span class="muted small">Choose your plane color</span>
+        <div id="color-swatches" class="color-swatches"></div>
+      </div>
+
       <div id="lobby-seats" class="seats"></div>
 
       <div class="lobby-actions">
@@ -92,18 +97,28 @@
             </div>
           </div>
         </div>
-        <div class="dice-row">
-          <div id="dice-face" class="dice-face">–</div>
-          <button id="btn-roll" class="btn btn-primary" disabled>Roll Dice</button>
-          <div id="turn-indicator" class="turn-indicator"></div>
-        </div>
-        <div id="gas-choice" class="gas-choice hidden">
-          <span class="gas-choice-label">⛽ Gas station! Take the shortcut?</span>
-          <button id="btn-gas-shortcut" class="btn btn-primary">Take shortcut</button>
-          <button id="btn-gas-normal" class="btn btn-ghost">Normal route</button>
-        </div>
       </div>
       <div class="side-col">
+        <div class="dice-panel">
+          <div id="dice-3d" class="dice-3d">
+            <span class="pip" data-pos="1"></span>
+            <span class="pip" data-pos="2"></span>
+            <span class="pip" data-pos="3"></span>
+            <span class="pip" data-pos="4"></span>
+            <span class="pip" data-pos="5"></span>
+            <span class="pip" data-pos="6"></span>
+            <span class="pip" data-pos="7"></span>
+            <span class="pip" data-pos="8"></span>
+            <span class="pip" data-pos="9"></span>
+          </div>
+          <button id="btn-roll" class="btn btn-primary" disabled>Roll Dice</button>
+          <div id="turn-indicator" class="turn-indicator"></div>
+          <div id="gas-choice" class="gas-choice hidden">
+            <span class="gas-choice-label">⛽ Gas station! Take the shortcut?</span>
+            <button id="btn-gas-shortcut" class="btn btn-primary">Take shortcut</button>
+            <button id="btn-gas-normal" class="btn btn-ghost">Normal route</button>
+          </div>
+        </div>
         <div id="players-panel" class="players-panel"></div>
         <div id="game-log" class="game-log"></div>
       </div>
