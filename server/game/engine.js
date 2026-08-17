@@ -226,16 +226,26 @@ function applyMove(game, planeIdx) {
     return finishTurn(game, dice, result.captured, result.justFinishedPlane);
   }
 
+  // Landing on your own color is still a landing — anything sitting there
+  // gets captured — even though the mandatory rule immediately carries the
+  // plane onward (or, at the gas trigger, pauses it for a decision).
+  let flyThroughCaptured = false;
+  if (isOwnColorN(targetN)) {
+    const landIdx = ringIndex(player.color, targetN);
+    flyThroughCaptured = captureAt(game, player, landIdx);
+    if (flyThroughCaptured) pushLog(game, `${player.name} sent an opponent plane back to the hangar!`);
+  }
+
   const resolved = resolveRingLanding(targetN);
   if (resolved.pending) {
     plane.n = GAS_TRIGGER_N; // provisionally sits at the trigger cell while deciding
-    game.awaitingGasChoice = { planeIdx, declineN: resolved.declineN };
+    game.awaitingGasChoice = { planeIdx, declineN: resolved.declineN, capturedOnArrival: flyThroughCaptured };
     pushLog(game, `${player.name} reached a gas station — choose to fly the shortcut or continue normally.`);
     return { pending: true };
   }
 
   const result = finalizeLanding(game, player, plane, resolved.finalN);
-  return finishTurn(game, dice, result.captured, result.justFinishedPlane);
+  return finishTurn(game, dice, result.captured || flyThroughCaptured, result.justFinishedPlane);
 }
 
 // Player decision at a gas station. useShortcut=true flies to the
@@ -249,7 +259,7 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
   const player = game.players[game.currentPlayer];
   const plane = player.planes[planeIdx];
   const dice = game.dice;
-  let captured = false;
+  let captured = !!pending.capturedOnArrival;
 
   if (useShortcut) {
     const flyoverIdx = ringIndex(player.color, GAS_FLYOVER_N);
