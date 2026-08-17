@@ -16,7 +16,8 @@
 
   <!-- HOME -->
   <section id="view-home" class="view">
-    <div class="card">
+    <div class="home-layout">
+    <div class="card main-card">
       <div class="hero-board">
         <div class="board-crop"><img src="/assets/board.svg" alt="Flying Chess board"></div>
         <div class="hero-copy">
@@ -70,6 +71,66 @@
         <button id="btn-join" class="btn">Join</button>
       </div>
       <p id="home-error" class="error"></p>
+    </div>
+
+    <div class="card rules-card">
+      <h2>How to Play</h2>
+      <span class="muted small">The rules behind this board</span>
+
+      <div class="rule-item">
+        <div class="rule-icon">🛫</div>
+        <div class="rule-text">
+          <strong>Takeoff</strong>
+          <span>Roll a 6 to leave the hangar for the ready pad. Any roll after that launches you onto the board.</span>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-icon">🎯</div>
+        <div class="rule-text">
+          <strong>Own-color bonus</strong>
+          <span>Land on a cell matching your color and you auto-advance 4 more cells — mandatory, every time.</span>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-icon">⛽</div>
+        <div class="rule-text">
+          <strong>Gas stations</strong>
+          <span>Reach one and choose: fly the shortcut (capturing anything in your path) or take the normal route.</span>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-icon">💥</div>
+        <div class="rule-text">
+          <strong>Capturing</strong>
+          <span>Land on an opponent's plane on an unsafe cell and it's sent back to their hangar.</span>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-icon">🏠</div>
+        <div class="rule-text">
+          <strong>Coming home</strong>
+          <span>You need the exact roll to land on cell 6 of your home stretch. Overshoot and you bounce back the remaining steps.</span>
+        </div>
+      </div>
+
+      <div class="rule-item">
+        <div class="rule-icon">🏆</div>
+        <div class="rule-text">
+          <strong>Winning</strong>
+          <span>First to get all 4 planes home wins the race.</span>
+          <div class="rule-colors">
+            <span class="c" style="background:#F6AE2D"></span>
+            <span class="c" style="background:#5FAD56"></span>
+            <span class="c" style="background:#A4031F"></span>
+            <span class="c" style="background:#07A0C3"></span>
+          </div>
+        </div>
+      </div>
+    </div>
     </div>
   </section>
 

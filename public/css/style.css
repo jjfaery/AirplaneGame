@@ -46,6 +46,36 @@ body {
   margin: 0 auto;
 }
 
+.home-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  justify-content: center;
+  max-width: 1040px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+.home-layout .card { margin: 0; }
+.main-card { flex: 1 1 480px; max-width: 640px; }
+.rules-card { flex: 1 1 340px; max-width: 380px; }
+
+.rules-card h2 { margin: 0 0 4px; font-size: 20px; }
+.rules-card > .muted.small { display: block; margin-bottom: 18px; }
+.rule-item {
+  display: flex; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rule-item:last-child { border-bottom: none; }
+.rule-icon {
+  width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; background: var(--panel-2); border: 1px solid var(--border);
+}
+.rule-text strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.rule-text span { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.rule-colors { display: flex; gap: 5px; margin-top: 6px; }
+.rule-colors .c { width: 12px; height: 12px; border-radius: 50%; }
+
 h1 { margin: 0 0 6px; font-size: 26px; }
 
 .hero-board {
