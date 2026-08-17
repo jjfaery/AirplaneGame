@@ -6,9 +6,14 @@
 // Each plane's progress is tracked as a single integer `n`:
 //   n === 0                    -> parked in hangar
 //   n === -1                   -> on the "ready" pad, just outside the shared track
-//   1 <= n <= RING_SPAN        -> on the shared 52-cell outer ring
-//   RING_SPAN < n <= RING_SPAN+HOME_SPAN -> on this color's private 6-cell home stretch
-//   n === FINISHED_N           -> landed home (finished)
+//   1 <= n < RING_SPAN+HOME_SPAN -> on the shared ring, then this color's 6-cell home
+//                                  stretch (the last of those 6 cells IS n === FINISHED_N)
+//   n === FINISHED_N           -> landed home (finished); token returns to its hangar
+//                                  slot, dimmed, and takes no further part in the game
+//
+// Overshooting within the home stretch bounces back the remaining distance
+// (classic Ludo-style rule) rather than blocking the move — e.g. sitting on
+// the 5th home cell and rolling a 3 goes 5->6->5->4, landing on 4.
 //
 // Leaving the hangar takes a 6 (hangar -> ready pad). From the ready pad,
 // any roll launches onto the ring, landing `dice` cells past the color's
@@ -42,7 +47,7 @@ const RING_SIZE = 52;
 
 const RING_SPAN = 50; // relative n range on the shared ring: 1..RING_SPAN
 const HOME_SPAN = 6; // relative n range in the home stretch: RING_SPAN+1..RING_SPAN+HOME_SPAN
-const FINISHED_N = RING_SPAN + HOME_SPAN + 1; // 57
+const FINISHED_N = RING_SPAN + HOME_SPAN; // 56 — the 6th home cell IS the finish
 
 const OWN_COLOR_STEP = 4;
 const GAS_TRIGGER_N = 18;
@@ -99,7 +104,7 @@ function getLegalMoves(player, dice) {
     } else if (plane.n === -1) {
       legal.push(i); // any roll launches from the ready pad
     } else if (plane.n < FINISHED_N) {
-      if (plane.n + dice <= FINISHED_N) legal.push(i);
+      legal.push(i); // any roll is legal — overshoot bounces back within the home stretch
     }
   });
   return legal;
@@ -214,6 +219,9 @@ function applyMove(game, planeIdx) {
   if (targetN < 1 || targetN > RING_SPAN) {
     // entering/advancing within home stretch or landing exactly home;
     // no own-color/gas-station rules apply off the shared ring
+    if (targetN > FINISHED_N) {
+      targetN = 2 * FINISHED_N - targetN; // overshoot bounces back within the home stretch
+    }
     const result = finalizeLanding(game, player, plane, targetN);
     return finishTurn(game, dice, result.captured, result.justFinishedPlane);
   }
@@ -321,7 +329,8 @@ function chooseAIMove(game) {
   const scored = legal.map((i) => {
     const plane = player.planes[i];
     let score = 0;
-    const resultN = plane.n === 0 ? -1 : plane.n === -1 ? dice : plane.n + dice;
+    let resultN = plane.n === 0 ? -1 : plane.n === -1 ? dice : plane.n + dice;
+    if (resultN > FINISHED_N) resultN = 2 * FINISHED_N - resultN; // overshoot bounce
 
     if (resultN === FINISHED_N) score += 100;
 

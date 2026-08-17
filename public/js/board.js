@@ -9,13 +9,14 @@
 //   n === -1            -> ready pad (waiting to launch)
 //   1 <= n <= RING_SPAN  -> ring[(launchIndex + n - 1) % 52]
 //   RING_SPAN < n < FINISHED_N -> homeStretch[color][n - RING_SPAN - 1]
-//   n === FINISHED_N     -> finished (parks back at its hangar slot, dimmed)
+//   n === FINISHED_N     -> the 6th (last) home cell; finished, parks at its
+//                            hangar slot, dimmed, no longer part of play
 
 (function () {
   const COLORS = ['orange', 'green', 'red', 'blue'];
   const LAUNCH_INDEX = { green: 0, red: 13, blue: 26, orange: 39 };
   const RING_SPAN = 50;
-  const FINISHED_N = 57;
+  const FINISHED_N = 56;
   const COLOR_HEX = {
     orange: '#F6AE2D', // Honey Bronze
     green: '#5FAD56',  // Moss Green
