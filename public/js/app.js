@@ -218,27 +218,44 @@
     1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9],
   };
 
-  function setDiceFace(n) {
-    const active = new Set(DICE_PIPS[n] || []);
-    document.querySelectorAll('#dice-3d .pip').forEach((el) => {
-      el.classList.toggle('active', active.has(Number(el.dataset.pos)));
-    });
+  // Build the 9-pip layout inside each of the cube's 6 faces once.
+  document.querySelectorAll('#dice-cube .face').forEach((faceEl) => {
+    const value = Number(faceEl.dataset.face);
+    const active = new Set(DICE_PIPS[value]);
+    for (let pos = 1; pos <= 9; pos++) {
+      const pip = document.createElement('span');
+      pip.className = 'pip' + (active.has(pos) ? ' active' : '');
+      pip.dataset.pos = pos;
+      faceEl.appendChild(pip);
+    }
+  });
+
+  // Rotation (in degrees) that brings each face to point at the viewer.
+  const FACE_ROTATION = {
+    1: { x: 0, y: 0 }, 2: { x: -90, y: 0 }, 3: { x: 0, y: -90 },
+    4: { x: 0, y: 90 }, 5: { x: 90, y: 0 }, 6: { x: 0, y: 180 },
+  };
+  const cubeEl = document.getElementById('dice-cube');
+  const cubeRot = { x: 0, y: 0 };
+  let lastDiceValue = null;
+
+  function nextRotation(current, target, extraSpins) {
+    const base = current + extraSpins * 360;
+    const diff = ((target - base) % 360 + 360) % 360;
+    return base + diff;
+  }
+
+  function rollCubeTo(value) {
+    const target = FACE_ROTATION[value];
+    const spins = 2 + Math.floor(Math.random() * 2); // 2-3 extra full turns per axis
+    cubeRot.x = nextRotation(cubeRot.x, target.x, spins);
+    cubeRot.y = nextRotation(cubeRot.y, target.y, spins);
+    cubeEl.style.transform = `rotateX(${cubeRot.x}deg) rotateY(${cubeRot.y}deg)`;
   }
 
   document.getElementById('btn-roll').addEventListener('click', () => {
-    const rollBtn = document.getElementById('btn-roll');
-    const diceEl = document.getElementById('dice-3d');
-    rollBtn.disabled = true;
-    diceEl.classList.add('rolling');
-    const spinTimer = setInterval(() => setDiceFace(1 + Math.floor(Math.random() * 6)), 90);
-
-    socket.emit('game:roll', { code: currentRoomCode }, () => {
-      setTimeout(() => {
-        clearInterval(spinTimer);
-        diceEl.classList.remove('rolling');
-        renderGame();
-      }, 450);
-    });
+    document.getElementById('btn-roll').disabled = true;
+    socket.emit('game:roll', { code: currentRoomCode }, () => {});
   });
 
   document.getElementById('btn-gas-shortcut').addEventListener('click', () => {
@@ -271,8 +288,9 @@
     const v = latestGameView;
     if (!v) return;
 
-    if (!document.getElementById('dice-3d').classList.contains('rolling')) {
-      setDiceFace(v.dice || 0);
+    if (v.dice && v.dice !== lastDiceValue) {
+      lastDiceValue = v.dice;
+      rollCubeTo(v.dice);
     }
 
     const myIdx = myPlayerIndex();
