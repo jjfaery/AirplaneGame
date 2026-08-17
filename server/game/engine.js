@@ -41,7 +41,6 @@
 
 const COLORS = ['orange', 'green', 'red', 'blue'];
 const LAUNCH_INDEX = { green: 0, red: 13, blue: 26, orange: 39 };
-const SAFE_SQUARES = new Set(Object.values(LAUNCH_INDEX));
 const PLANES_PER_PLAYER = 4;
 const RING_SIZE = 52;
 
@@ -133,10 +132,9 @@ function rollDice(game) {
 }
 
 // Capture any opposing plane sitting on the given absolute ring index
-// (0..51), unless it's a safe/launch square. Returns true if anything
-// was captured.
+// (0..51). There are no safe squares — every cell, including a color's
+// own launch cell, is capturable. Returns true if anything was captured.
 function captureAt(game, player, ringIdx) {
-  if (SAFE_SQUARES.has(ringIdx)) return false;
   let captured = false;
   for (const other of game.players) {
     if (other === player) continue;
@@ -346,13 +344,11 @@ function chooseAIMove(game) {
 
     if (resultN >= 1 && resultN <= RING_SPAN) {
       const idx = ringIndex(player.color, resultN);
-      if (!SAFE_SQUARES.has(idx)) {
-        for (const other of game.players) {
-          if (other === player) continue;
-          for (const op of other.planes) {
-            if (op.n >= 1 && op.n <= RING_SPAN && ringIndex(other.color, op.n) === idx) {
-              score += 50;
-            }
+      for (const other of game.players) {
+        if (other === player) continue;
+        for (const op of other.planes) {
+          if (op.n >= 1 && op.n <= RING_SPAN && ringIndex(other.color, op.n) === idx) {
+            score += 50;
           }
         }
       }
@@ -377,7 +373,6 @@ function chooseAIGasDecision() {
 module.exports = {
   COLORS,
   LAUNCH_INDEX,
-  SAFE_SQUARES,
   PLANES_PER_PLAYER,
   RING_SIZE,
   RING_SPAN,
