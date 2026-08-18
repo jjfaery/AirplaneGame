@@ -9,9 +9,29 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">✈️ 飞机棋 <span class="brand-sub">Flying Chess</span></div>
-  <button id="btn-mute" class="mute-btn" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+  <a href="#" id="brand-link" class="brand">✈️ 飞机棋 <span class="brand-sub">Flying Chess</span></a>
+  <div class="topbar-buttons">
+    <button id="btn-bug-report" class="bug-report-btn" title="Report a bug" aria-label="Report a bug">🐛</button>
+    <button id="btn-mute" class="mute-btn" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+  </div>
 </header>
+
+<div id="bug-report-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Report a Bug</h2>
+      <button id="btn-close-bug-modal" class="modal-close" aria-label="Close">✕</button>
+    </div>
+    <form id="bug-report-form" class="bug-report-form">
+      <label for="bug-description">Describe the bug:</label>
+      <textarea id="bug-description" name="description" placeholder="What happened? What should happen instead?" rows="6" required></textarea>
+      <button type="submit" class="btn-submit">Submit Report</button>
+    </form>
+    <div id="bug-success-message" class="success-message hidden">✓ Bug report submitted. Thanks!</div>
+  </div>
+</div>
+
+<button id="btn-back-to-top" class="back-to-top hidden" title="Back to top" aria-label="Back to top">⬆️</button>
 
 <main id="app">
 

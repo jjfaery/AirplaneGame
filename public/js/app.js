@@ -29,6 +29,90 @@
     syncMuteButton();
   });
 
+  // ---------- CLICKABLE LOGO ----------
+  const brandLink = document.getElementById('brand-link');
+  brandLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (currentRoomCode) {
+      leaveRoom();
+    }
+    showView('home');
+  });
+
+  // ---------- BUG REPORT ----------
+  const bugReportBtn = document.getElementById('btn-bug-report');
+  const bugReportModal = document.getElementById('bug-report-modal');
+  const closeBugModalBtn = document.getElementById('btn-close-bug-modal');
+  const bugReportForm = document.getElementById('bug-report-form');
+  const bugDescriptionInput = document.getElementById('bug-description');
+  const bugSuccessMessage = document.getElementById('bug-success-message');
+
+  bugReportBtn.addEventListener('click', () => {
+    bugReportModal.classList.remove('hidden');
+    bugDescriptionInput.focus();
+  });
+
+  closeBugModalBtn.addEventListener('click', () => {
+    bugReportModal.classList.add('hidden');
+    bugReportForm.reset();
+    bugSuccessMessage.classList.add('hidden');
+  });
+
+  bugReportForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const description = bugDescriptionInput.value.trim();
+    if (!description) return;
+
+    const bugData = {
+      description,
+      roomCode: currentRoomCode,
+      gameState: latestGameView ? 'in-game' : 'lobby',
+      timestamp: new Date().toISOString(),
+    };
+
+    fetch('/api/bug-report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bugData),
+    }).then((res) => {
+      if (res.ok) {
+        bugSuccessMessage.classList.remove('hidden');
+        bugReportForm.reset();
+        setTimeout(() => {
+          bugReportModal.classList.add('hidden');
+          bugSuccessMessage.classList.add('hidden');
+        }, 2000);
+      }
+    }).catch((err) => {
+      console.error('Bug report failed:', err);
+      alert('Failed to submit bug report. Please try again.');
+    });
+  });
+
+  // Close modal on outside click
+  bugReportModal.addEventListener('click', (e) => {
+    if (e.target === bugReportModal) {
+      bugReportModal.classList.add('hidden');
+      bugReportForm.reset();
+      bugSuccessMessage.classList.add('hidden');
+    }
+  });
+
+  // ---------- BACK-TO-TOP BUTTON ----------
+  const backToTopBtn = document.getElementById('btn-back-to-top');
+
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 100) {
+      backToTopBtn.classList.remove('hidden');
+    } else {
+      backToTopBtn.classList.add('hidden');
+    }
+  });
+
+  backToTopBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   // Diff the server's log window against what we've already seen and play
   // a sound for each newly-appended line (covers every player's actions,
   // not just the local one).

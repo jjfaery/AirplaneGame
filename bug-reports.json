@@ -1,0 +1,14 @@
+[
+  {
+    "timestamp": "2026-08-18T18:43:27.171Z",
+    "roomCode": null,
+    "gameState": "lobby",
+    "description": "Test bug: Example issue"
+  },
+  {
+    "timestamp": "2026-08-18T18:44:16.535Z",
+    "roomCode": null,
+    "gameState": "lobby",
+    "description": "Test bug: Example issue"
+  }
+]

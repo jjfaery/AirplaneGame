@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -10,7 +11,43 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Bug report endpoint
+app.post('/api/bug-report', (req, res) => {
+  const { description, roomCode, gameState, timestamp } = req.body;
+  if (!description) {
+    return res.status(400).json({ error: 'Description required' });
+  }
+
+  const bugReport = {
+    timestamp,
+    roomCode,
+    gameState,
+    description,
+  };
+
+  const bugLogPath = path.join(__dirname, '..', 'bug-reports.json');
+  try {
+    let reports = [];
+    try {
+      if (fs.existsSync(bugLogPath)) {
+        const data = fs.readFileSync(bugLogPath, 'utf8');
+        reports = JSON.parse(data);
+      }
+    } catch (e) {
+      reports = [];
+    }
+    reports.push(bugReport);
+    fs.writeFileSync(bugLogPath, JSON.stringify(reports, null, 2), 'utf8');
+    console.log(`Bug report saved: ${description.slice(0, 50)}`);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Failed to save bug report:', err);
+    res.status(500).json({ error: 'Failed to save report' });
+  }
+});
 
 const rooms = new RoomManager(io);
 
