@@ -5,7 +5,6 @@ const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const nodemailer = require('nodemailer');
 const { RoomManager } = require('./rooms');
 
 const app = express();
@@ -15,39 +14,26 @@ const io = new Server(server);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Email configuration
-const emailConfig = {
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: process.env.SMTP_USER && process.env.SMTP_PASS
-    ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      }
-    : null,
-};
-
-const transporter = emailConfig.auth ? nodemailer.createTransport(emailConfig) : null;
-const bugReportEmail = process.env.BUG_REPORT_EMAIL || 'jjfaery@gmail.com';
+// Formspree configuration for bug reports
+const formspreeFormId = process.env.FORMSPREE_FORM_ID || 'xbgrpqzb';
 
 async function sendBugReportEmail(bugReport) {
-  if (!transporter) return;
   try {
-    await transporter.sendMail({
-      from: emailConfig.auth.user,
-      to: bugReportEmail,
-      subject: `Bug Report: ${bugReport.description.slice(0, 50)}`,
-      html: `
-        <h2>New Bug Report</h2>
-        <p><strong>Description:</strong></p>
-        <p>${bugReport.description.replace(/\n/g, '<br>')}</p>
-        <p><strong>Room Code:</strong> ${bugReport.roomCode || 'N/A'}</p>
-        <p><strong>Timestamp:</strong> ${bugReport.timestamp}</p>
-        ${bugReport.gameState ? `<p><strong>Game State:</strong></p><pre>${JSON.stringify(bugReport.gameState, null, 2)}</pre>` : ''}
-      `,
+    const response = await fetch(`https://formspree.io/f/${formspreeFormId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        description: bugReport.description,
+        roomCode: bugReport.roomCode || 'N/A',
+        timestamp: bugReport.timestamp,
+        gameState: bugReport.gameState ? JSON.stringify(bugReport.gameState, null, 2) : 'N/A',
+      }),
     });
-    console.log('Bug report email sent successfully');
+    if (response.ok) {
+      console.log('Bug report sent to email successfully');
+    } else {
+      console.error('Failed to send bug report:', response.statusText);
+    }
   } catch (err) {
     console.error('Failed to send bug report email:', err.message);
   }
