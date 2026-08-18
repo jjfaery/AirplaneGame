@@ -70,6 +70,10 @@
     move() {
       tone(480, 0.07, { type: 'sine', gain: 0.09 });
     },
+    jump() {
+      tone(392, 0.08, { type: 'square', sweepTo: 587, gain: 0.11 });
+      setTimeout(() => tone(587, 0.1, { type: 'square', sweepTo: 880, gain: 0.11 }), 70);
+    },
     capture() {
       noiseBurst(0.22, { filterFreq: 400, gain: 0.32 });
       tone(130, 0.2, { type: 'sawtooth', sweepTo: 55, gain: 0.18 });

@@ -54,6 +54,7 @@
     newLogLines(prevLog, v.log).forEach((line) => {
       if (line.includes('took the gas-station shortcut')) window.AirplaneSound.gasShortcut();
       else if (line.includes('sent an opponent plane back to the hangar')) window.AirplaneSound.capture();
+      else if (line.includes('landed on their own color and jumped ahead')) window.AirplaneSound.jump();
       else if (line.includes('is ready for takeoff')) window.AirplaneSound.launch();
       else if (line.includes('wins!')) window.AirplaneSound.win();
       else if (line.includes('landed home')) window.AirplaneSound.home();

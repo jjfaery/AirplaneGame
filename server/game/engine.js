@@ -232,6 +232,9 @@ function applyMove(game, planeIdx) {
     const landIdx = ringIndex(player.color, targetN);
     flyThroughCaptured = captureAt(game, player, landIdx);
     if (flyThroughCaptured) pushLog(game, `${player.name} sent an opponent plane back to the hangar!`);
+    if (targetN !== GAS_TRIGGER_N) {
+      pushLog(game, `${player.name} landed on their own color and jumped ahead!`);
+    }
   }
 
   const resolved = resolveRingLanding(targetN);
