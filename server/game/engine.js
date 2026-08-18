@@ -133,13 +133,22 @@ function rollDice(game) {
 
 // Capture any opposing plane sitting on the given absolute ring index
 // (0..51). There are no safe squares — every cell, including a color's
-// own launch cell, is capturable. Returns true if anything was captured.
+// own launch cell, is capturable. Also captures planes in home stretch if
+// the ring index corresponds to their home entry. Returns true if anything
+// was captured.
 function captureAt(game, player, ringIdx) {
   let captured = false;
   for (const other of game.players) {
     if (other === player) continue;
     for (const op of other.planes) {
+      // Check ring positions (1-50)
       if (op.n >= 1 && op.n <= RING_SPAN && ringIndex(other.color, op.n) === ringIdx) {
+        op.n = 0;
+        captured = true;
+      }
+      // Check home stretch (51-56): if this ring index is the home entry for
+      // this opponent, capture their home planes
+      if (op.n > RING_SPAN && ringIdx === LAUNCH_INDEX[other.color]) {
         op.n = 0;
         captured = true;
       }
@@ -263,10 +272,10 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
   let captured = !!pending.capturedOnArrival;
 
   if (useShortcut) {
-    const flyoverIdx = ringIndex(player.color, GAS_FLYOVER_N);
-    const destIdx = ringIndex(player.color, GAS_DESTINATION_N);
-    if (captureAt(game, player, flyoverIdx)) captured = true;
-    if (captureAt(game, player, destIdx)) captured = true;
+    for (let n = GAS_TRIGGER_N; n <= GAS_DESTINATION_N; n++) {
+      const idx = ringIndex(player.color, n);
+      if (captureAt(game, player, idx)) captured = true;
+    }
     if (captured) pushLog(game, `${player.name}'s shortcut sent an opponent plane back to the hangar!`);
     plane.n = GAS_DESTINATION_N + OWN_COLOR_STEP;
     pushLog(game, `${player.name} took the gas-station shortcut!`);
