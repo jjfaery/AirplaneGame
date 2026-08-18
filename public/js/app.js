@@ -11,9 +11,54 @@
   let latestRoomView = null;
   let latestGameView = null;
   let renderer = null;
+  let prevLog = [];
+  let logInitialized = false;
 
   function showView(name) {
     Object.entries(views).forEach(([k, el]) => el.classList.toggle('hidden', k !== name));
+  }
+
+  // ---------- SOUND ----------
+  const muteBtn = document.getElementById('btn-mute');
+  function syncMuteButton() {
+    muteBtn.textContent = window.AirplaneSound.isMuted() ? '🔇' : '🔊';
+  }
+  syncMuteButton();
+  muteBtn.addEventListener('click', () => {
+    window.AirplaneSound.setMuted(!window.AirplaneSound.isMuted());
+    syncMuteButton();
+  });
+
+  // Diff the server's log window against what we've already seen and play
+  // a sound for each newly-appended line (covers every player's actions,
+  // not just the local one).
+  function newLogLines(oldLog, newLog) {
+    const maxK = Math.min(oldLog.length, newLog.length);
+    let k = 0;
+    for (let cand = maxK; cand >= 0; cand--) {
+      let match = true;
+      for (let i = 0; i < cand; i++) {
+        if (oldLog[oldLog.length - cand + i] !== newLog[i]) { match = false; break; }
+      }
+      if (match) { k = cand; break; }
+    }
+    return newLog.slice(k);
+  }
+
+  function playSoundsForLog(v) {
+    if (!logInitialized) {
+      prevLog = v.log.slice();
+      logInitialized = true;
+      return;
+    }
+    newLogLines(prevLog, v.log).forEach((line) => {
+      if (line.includes('took the gas-station shortcut')) window.AirplaneSound.gasShortcut();
+      else if (line.includes('sent an opponent plane back to the hangar')) window.AirplaneSound.capture();
+      else if (line.includes('is ready for takeoff')) window.AirplaneSound.launch();
+      else if (line.includes('wins!')) window.AirplaneSound.win();
+      else if (line.includes('landed home')) window.AirplaneSound.home();
+    });
+    prevLog = v.log.slice();
   }
 
   function setUrlRoom(code) {
@@ -194,6 +239,8 @@
     currentRoomCode = null;
     latestRoomView = null;
     latestGameView = null;
+    prevLog = [];
+    logInitialized = false;
     setUrlRoom(null);
   }
 
@@ -211,6 +258,7 @@
 
   renderer.onPlaneClick = (playerIndex, planeIndex) => {
     if (playerIndex !== myPlayerIndex()) return;
+    window.AirplaneSound.move();
     socket.emit('game:move', { code: currentRoomCode, planeIndex }, () => {});
   };
 
@@ -291,7 +339,10 @@
     if (v.dice && v.dice !== lastDiceValue) {
       lastDiceValue = v.dice;
       rollCubeTo(v.dice);
+      window.AirplaneSound.roll();
     }
+
+    playSoundsForLog(v);
 
     const myIdx = myPlayerIndex();
     const isMyTurn = v.currentPlayer === myIdx && v.gamePhase === 'playing';
