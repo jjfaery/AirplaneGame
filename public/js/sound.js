@@ -60,9 +60,14 @@
       localStorage.setItem(STORAGE_KEY, v ? '1' : '0');
     },
     roll() {
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => noiseBurst(0.035, { filterFreq: 2600, gain: 0.14 }), i * 65);
-      }
+      // Improved dice roll - more mature, clear click sound
+      tone(800, 0.06, { type: 'sine', gain: 0.12 });
+      setTimeout(() => tone(1200, 0.05, { type: 'sine', gain: 0.1 }), 40);
+      setTimeout(() => tone(900, 0.06, { type: 'sine', gain: 0.11 }), 80);
+    },
+    noLegalMoves() {
+      // Low warning tone - indicates a problem
+      tone(220, 0.4, { type: 'sine', sweepTo: 150, gain: 0.15 });
     },
     launch() {
       tone(220, 0.18, { type: 'triangle', sweepTo: 660, gain: 0.14 });
@@ -75,17 +80,21 @@
       setTimeout(() => tone(587, 0.1, { type: 'square', sweepTo: 880, gain: 0.11 }), 70);
     },
     capture() {
+      // Placeholder - will be replaced with audio file later
       noiseBurst(0.22, { filterFreq: 400, gain: 0.32 });
       tone(130, 0.2, { type: 'sawtooth', sweepTo: 55, gain: 0.18 });
     },
     gasShortcut() {
+      // Placeholder - will be replaced with audio file later
       tone(300, 0.35, { type: 'sawtooth', sweepTo: 1300, gain: 0.14 });
     },
     home() {
+      // Placeholder - will be replaced with audio file later
       tone(523.25, 0.12, { type: 'sine', gain: 0.15 });
       setTimeout(() => tone(783.99, 0.18, { type: 'sine', gain: 0.15 }), 100);
     },
     win() {
+      // Placeholder - will be replaced with audio file later
       [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
         setTimeout(() => tone(f, 0.25, { type: 'triangle', gain: 0.17 }), i * 140);
       });
