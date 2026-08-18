@@ -272,12 +272,18 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
   let captured = !!pending.capturedOnArrival;
 
   if (useShortcut) {
-    for (let n = GAS_TRIGGER_N; n <= GAS_DESTINATION_N; n++) {
-      const idx = ringIndex(player.color, n);
-      if (captureAt(game, player, idx)) captured = true;
-    }
+    // Only capture at 4 specific cells: trigger, landing, jump, and home space 3
+    const triggerIdx = ringIndex(player.color, GAS_TRIGGER_N);
+    const destIdx = ringIndex(player.color, GAS_DESTINATION_N);
+    const jumpDestN = GAS_DESTINATION_N + OWN_COLOR_STEP;
+    const jumpIdx = ringIndex(player.color, jumpDestN);
+
+    if (captureAt(game, player, triggerIdx)) captured = true;
+    if (captureAt(game, player, destIdx)) captured = true;
+    if (captureAt(game, player, jumpIdx)) captured = true;
+
     if (captured) pushLog(game, `${player.name}'s shortcut sent an opponent plane back to the hangar!`);
-    plane.n = GAS_DESTINATION_N + OWN_COLOR_STEP;
+    plane.n = jumpDestN;
     pushLog(game, `${player.name} took the gas-station shortcut!`);
   } else {
     plane.n = pending.declineN;

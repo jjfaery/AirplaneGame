@@ -5,6 +5,7 @@ const fs = require('fs');
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const nodemailer = require('nodemailer');
 const { RoomManager } = require('./rooms');
 
 const app = express();
@@ -14,8 +15,46 @@ const io = new Server(server);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Email configuration
+const emailConfig = {
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: process.env.SMTP_SECURE === 'true',
+  auth: process.env.SMTP_USER && process.env.SMTP_PASS
+    ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      }
+    : null,
+};
+
+const transporter = emailConfig.auth ? nodemailer.createTransport(emailConfig) : null;
+const bugReportEmail = process.env.BUG_REPORT_EMAIL || 'jjfaery@gmail.com';
+
+async function sendBugReportEmail(bugReport) {
+  if (!transporter) return;
+  try {
+    await transporter.sendMail({
+      from: emailConfig.auth.user,
+      to: bugReportEmail,
+      subject: `Bug Report: ${bugReport.description.slice(0, 50)}`,
+      html: `
+        <h2>New Bug Report</h2>
+        <p><strong>Description:</strong></p>
+        <p>${bugReport.description.replace(/\n/g, '<br>')}</p>
+        <p><strong>Room Code:</strong> ${bugReport.roomCode || 'N/A'}</p>
+        <p><strong>Timestamp:</strong> ${bugReport.timestamp}</p>
+        ${bugReport.gameState ? `<p><strong>Game State:</strong></p><pre>${JSON.stringify(bugReport.gameState, null, 2)}</pre>` : ''}
+      `,
+    });
+    console.log('Bug report email sent successfully');
+  } catch (err) {
+    console.error('Failed to send bug report email:', err.message);
+  }
+}
+
 // Bug report endpoint
-app.post('/api/bug-report', (req, res) => {
+app.post('/api/bug-report', async (req, res) => {
   const { description, roomCode, gameState, timestamp } = req.body;
   if (!description) {
     return res.status(400).json({ error: 'Description required' });
@@ -42,6 +81,10 @@ app.post('/api/bug-report', (req, res) => {
     reports.push(bugReport);
     fs.writeFileSync(bugLogPath, JSON.stringify(reports, null, 2), 'utf8');
     console.log(`Bug report saved: ${description.slice(0, 50)}`);
+
+    // Send email asynchronously (don't block response)
+    sendBugReportEmail(bugReport);
+
     res.json({ ok: true });
   } catch (err) {
     console.error('Failed to save bug report:', err);
