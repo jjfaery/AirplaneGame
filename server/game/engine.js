@@ -146,9 +146,9 @@ function captureAt(game, player, ringIdx) {
         op.n = 0;
         captured = true;
       }
-      // Check home stretch (51-56): if this ring index is the home entry for
-      // this opponent, capture their home planes
-      if (op.n > RING_SPAN && ringIdx === LAUNCH_INDEX[other.color]) {
+      // Check home stretch: only capture planes at home space 3 (relative n=53)
+      // when the shortcut path crosses through that cell
+      if (op.n === RING_SPAN + 3 && ringIdx === LAUNCH_INDEX[other.color]) {
         op.n = 0;
         captured = true;
       }
