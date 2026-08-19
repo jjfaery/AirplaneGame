@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Airplane Chess - Sound Preview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .category {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .category h2 {
+      margin-top: 0;
+      color: #2c3e50;
+      font-size: 18px;
+    }
+    .sound-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 15px 0;
+      padding: 10px;
+      background: #fafafa;
+      border-radius: 5px;
+    }
+    .sound-item strong {
+      min-width: 150px;
+      color: #34495e;
+    }
+    audio {
+      flex: 1;
+      min-width: 250px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎵 Airplane Chess - Sound Effects Preview</h1>
+
+  <div class="category">
+    <h2>🎯 Major Events (Professional Audio)</h2>
+
+    <div class="sound-item">
+      <strong>Win (Victory):</strong>
+      <audio controls>
+        <source src="/assets/sounds/win.wav" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <div class="sound-item">
+      <strong>Home (Arrival):</strong>
+      <audio controls>
+        <source src="/assets/sounds/home.wav" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <div class="sound-item">
+      <strong>Capture (Hit):</strong>
+      <audio controls>
+        <source src="/assets/sounds/capture.wav" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+
+    <div class="sound-item">
+      <strong>Shortcut (Boost):</strong>
+      <audio controls>
+        <source src="/assets/sounds/shortcut.wav" type="audio/wav">
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  </div>
+
+  <div class="category">
+    <h2>🎼 Actions (Synthesized Sounds)</h2>
+
+    <div class="sound-item">
+      <strong>Dice Roll:</strong>
+      <button onclick="playDiceRoll()">Play</button>
+    </div>
+
+    <div class="sound-item">
+      <strong>No Legal Moves:</strong>
+      <button onclick="playNoLegalMoves()">Play</button>
+    </div>
+
+    <div class="sound-item">
+      <strong>Launch/Ready:</strong>
+      <button onclick="playLaunch()">Play</button>
+    </div>
+
+    <div class="sound-item">
+      <strong>Piece Move:</strong>
+      <button onclick="playMove()">Play</button>
+    </div>
+
+    <div class="sound-item">
+      <strong>Jump (Own Color):</strong>
+      <button onclick="playJump()">Play</button>
+    </div>
+  </div>
+
+  <script>
+    // Web Audio API synthesized sounds (same as in the game)
+    function createAudioContext() {
+      return new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function tone(freq, duration, opts = {}) {
+      const ac = createAudioContext();
+      const t0 = ac.currentTime;
+      const osc = ac.createOscillator();
+      osc.type = opts.type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      if (opts.sweepTo) {
+        osc.frequency.exponentialRampToValueAtTime(opts.sweepTo, t0 + duration);
+      }
+      const gain = ac.createGain();
+      const peak = opts.gain || 0.2;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(peak, t0 + (opts.attack || 0.006));
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+      osc.connect(gain).connect(ac.destination);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.05);
+    }
+
+    function noiseBurst(duration, opts = {}) {
+      const ac = createAudioContext();
+      const t0 = ac.currentTime;
+      const size = Math.max(1, Math.floor(ac.sampleRate * duration));
+      const buffer = ac.createBuffer(1, size, ac.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / size);
+      const src = ac.createBufferSource();
+      src.buffer = buffer;
+      const filter = ac.createBiquadFilter();
+      filter.type = opts.filterType || 'lowpass';
+      filter.frequency.value = opts.filterFreq || 800;
+      const gain = ac.createGain();
+      gain.gain.setValueAtTime(opts.gain || 0.3, t0);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+      src.connect(filter).connect(gain).connect(ac.destination);
+      src.start(t0);
+    }
+
+    function playDiceRoll() {
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => noiseBurst(0.06, { filterFreq: 2600, gain: 0.12 }), i * 40);
+      }
+    }
+
+    function playNoLegalMoves() {
+      tone(220, 0.4, { type: 'sine', sweepTo: 150, gain: 0.15 });
+    }
+
+    function playLaunch() {
+      tone(220, 0.18, { type: 'triangle', sweepTo: 660, gain: 0.14 });
+    }
+
+    function playMove() {
+      tone(480, 0.07, { type: 'sine', gain: 0.09 });
+    }
+
+    function playJump() {
+      tone(392, 0.08, { type: 'square', sweepTo: 587, gain: 0.11 });
+      setTimeout(() => tone(587, 0.1, { type: 'square', sweepTo: 880, gain: 0.11 }), 70);
+    }
+  </script>
+</body>
+</html>
