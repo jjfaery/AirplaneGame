@@ -87,9 +87,7 @@
       setTimeout(() => tone(587, 0.1, { type: 'square', sweepTo: 880, gain: 0.11 }), 70);
     },
     capture() {
-      // Placeholder - will be replaced with audio file later
-      noiseBurst(0.22, { filterFreq: 400, gain: 0.32 });
-      tone(130, 0.2, { type: 'sawtooth', sweepTo: 55, gain: 0.18 });
+      playAudio('capture.wav');
     },
     gasShortcut() {
       // Placeholder - will be replaced with audio file later
