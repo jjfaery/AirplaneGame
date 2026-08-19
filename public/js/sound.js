@@ -99,7 +99,7 @@
       setTimeout(() => tone(783.99, 0.18, { type: 'sine', gain: 0.15 }), 100);
     },
     win() {
-      playAudio('win.mp3');
+      playAudio('win.wav');
     },
   };
 
