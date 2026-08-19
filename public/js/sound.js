@@ -93,9 +93,7 @@
       playAudio('shortcut.wav');
     },
     home() {
-      // Placeholder - will be replaced with audio file later
-      tone(523.25, 0.12, { type: 'sine', gain: 0.15 });
-      setTimeout(() => tone(783.99, 0.18, { type: 'sine', gain: 0.15 }), 100);
+      playAudio('home.wav');
     },
     win() {
       playAudio('win.wav');
