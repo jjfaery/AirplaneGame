@@ -53,6 +53,13 @@
     src.start(t0);
   }
 
+  function playAudio(filename) {
+    if (muted) return;
+    const audio = new Audio(`/assets/sounds/${filename}`);
+    audio.volume = 0.7;
+    audio.play().catch(() => {});
+  }
+
   const Sound = {
     isMuted() { return muted; },
     setMuted(v) {
@@ -94,10 +101,7 @@
       setTimeout(() => tone(783.99, 0.18, { type: 'sine', gain: 0.15 }), 100);
     },
     win() {
-      // Placeholder - will be replaced with audio file later
-      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
-        setTimeout(() => tone(f, 0.25, { type: 'triangle', gain: 0.17 }), i * 140);
-      });
+      playAudio('win.mp3');
     },
   };
 
