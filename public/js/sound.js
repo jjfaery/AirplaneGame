@@ -90,8 +90,7 @@
       playAudio('capture.wav');
     },
     gasShortcut() {
-      // Placeholder - will be replaced with audio file later
-      tone(300, 0.35, { type: 'sawtooth', sweepTo: 1300, gain: 0.14 });
+      playAudio('shortcut.wav');
     },
     home() {
       // Placeholder - will be replaced with audio file later
