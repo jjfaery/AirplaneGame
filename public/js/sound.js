@@ -53,10 +53,11 @@
     src.start(t0);
   }
 
-  function playAudio(filename) {
+  function playAudio(filename, startTime = 0) {
     if (muted) return;
     const audio = new Audio(`/assets/sounds/${filename}`);
     audio.volume = 0.7;
+    audio.currentTime = startTime;
     audio.play().catch(() => {});
   }
 
@@ -90,7 +91,7 @@
       playAudio('capture.wav');
     },
     gasShortcut() {
-      playAudio('shortcut.wav');
+      playAudio('shortcut.wav', 1);
     },
     home() {
       playAudio('home.wav');
