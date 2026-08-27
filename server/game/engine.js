@@ -225,11 +225,16 @@ function applyMove(game, planeIdx) {
 
   if (targetN < 1 || targetN > RING_SPAN) {
     // entering/advancing within home stretch or landing exactly home;
-    // no own-color/gas-station rules apply off the shared ring
-    if (targetN > FINISHED_N) {
-      targetN = 2 * FINISHED_N - targetN; // overshoot bounces back within the home stretch
+    // Position 50 is an own-color cell that always grants +4 when entering home
+    let homeN = targetN;
+    if (plane.n <= RING_SPAN && targetN > RING_SPAN) {
+      // Crossing position 50 to enter home — apply the mandatory +4 bonus
+      homeN += OWN_COLOR_STEP;
     }
-    const result = finalizeLanding(game, player, plane, targetN);
+    if (homeN > FINISHED_N) {
+      homeN = 2 * FINISHED_N - homeN; // overshoot bounces back within the home stretch
+    }
+    const result = finalizeLanding(game, player, plane, homeN);
     return finishTurn(game, dice, result.captured, result.justFinishedPlane);
   }
 
