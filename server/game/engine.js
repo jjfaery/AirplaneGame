@@ -246,6 +246,17 @@ function applyMove(game, planeIdx) {
     }
   }
 
+  // Position 50 (RING_SPAN) is special: it's the last ring cell AND an own-color cell.
+  // If we land on it and get +4, we enter the home stretch. Apply the bonus first.
+  if (targetN === RING_SPAN) {
+    targetN += OWN_COLOR_STEP;
+    if (targetN > FINISHED_N) {
+      targetN = 2 * FINISHED_N - targetN; // overshoot bounces back
+    }
+    const result = finalizeLanding(game, player, plane, targetN);
+    return finishTurn(game, dice, result.captured || flyThroughCaptured, result.justFinishedPlane);
+  }
+
   const resolved = resolveRingLanding(targetN);
   if (resolved.pending) {
     plane.n = GAS_TRIGGER_N; // provisionally sits at the trigger cell while deciding
