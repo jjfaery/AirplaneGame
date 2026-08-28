@@ -320,7 +320,7 @@ function finishTurn(game, dice, captured, justFinishedPlane) {
     return { captured, justFinishedPlane };
   }
 
-  const bonusTurn = dice === 6 || captured || justFinishedPlane;
+  const bonusTurn = dice === 6 || justFinishedPlane;
   if (dice === 6) {
     game.consecutiveSixes++;
   } else {
