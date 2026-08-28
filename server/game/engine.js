@@ -277,6 +277,20 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
     if (captureAt(game, player, destIdx)) captured = true;
     if (!pending.reachedViaAutoJump && captureAt(game, player, jumpIdx)) captured = true;
 
+    // Shortcut also captures planes at home space 3 in the diagonally opposite color
+    const playerColorIdx = COLORS.indexOf(player.color);
+    const targetColorIdx = (playerColorIdx + 2) % COLORS.length;
+    const targetColor = COLORS[targetColorIdx];
+    for (const other of game.players) {
+      if (other.color !== targetColor) continue;
+      for (const op of other.planes) {
+        if (op.n === RING_SPAN + 3) {
+          op.n = 0;
+          captured = true;
+        }
+      }
+    }
+
     if (captured) pushLog(game, `${player.name}'s shortcut sent an opponent plane back to the hangar!`);
     plane.n = jumpDestN;
     pushLog(game, `${player.name} took the gas-station shortcut!`);
