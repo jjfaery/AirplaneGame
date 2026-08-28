@@ -249,7 +249,7 @@ function applyMove(game, planeIdx) {
   const resolved = resolveRingLanding(targetN);
   if (resolved.pending) {
     plane.n = GAS_TRIGGER_N; // provisionally sits at the trigger cell while deciding
-    const reachedViaAutoJump = isOwnColorN(targetN);
+    const reachedViaAutoJump = isOwnColorN(targetN) && targetN !== GAS_TRIGGER_N;
     game.awaitingGasChoice = { planeIdx, declineN: resolved.declineN, capturedOnArrival: flyThroughCaptured, reachedViaAutoJump };
     pushLog(game, `${player.name} reached a gas station — choose to fly the shortcut or continue normally.`);
     return { pending: true };
