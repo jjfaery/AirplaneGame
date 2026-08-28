@@ -138,6 +138,7 @@ function rollDice(game) {
 // was captured.
 function captureAt(game, player, ringIdx) {
   let captured = false;
+  let capturedPlayers = new Set();
   for (const other of game.players) {
     if (other === player) continue;
     for (const op of other.planes) {
@@ -145,10 +146,11 @@ function captureAt(game, player, ringIdx) {
       if (op.n >= 1 && op.n <= RING_SPAN && ringIndex(other.color, op.n) === ringIdx) {
         op.n = 0;
         captured = true;
+        capturedPlayers.add(other.name);
       }
     }
   }
-  return captured;
+  return { captured, capturedPlayers: Array.from(capturedPlayers) };
 }
 
 // Resolve landing on `n` for a plane already known to be entering ring
@@ -178,8 +180,11 @@ function finalizeLanding(game, player, plane, finalN) {
     pushLog(game, `${player.name}'s plane landed home!`);
   } else if (plane.n >= 1 && plane.n <= RING_SPAN) {
     const idx = ringIndex(player.color, plane.n);
-    captured = captureAt(game, player, idx);
-    if (captured) pushLog(game, `${player.name} sent an opponent plane back to the hangar!`);
+    const result = captureAt(game, player, idx);
+    captured = result.captured;
+    if (result.captured && result.capturedPlayers.length > 0) {
+      pushLog(game, `${player.name} sent ${result.capturedPlayers.join(' and ')}'s plane back to the hangar!`);
+    }
   }
 
   const allHome = player.planes.every((p) => p.n === FINISHED_N);
@@ -231,10 +236,12 @@ function applyMove(game, planeIdx) {
   // gets captured — even though the mandatory rule immediately carries the
   // plane onward (or, at the gas trigger, pauses it for a decision).
   let flyThroughCaptured = false;
+  let allCapturedPlayers = [];
   if (isOwnColorN(targetN)) {
     const landIdx = ringIndex(player.color, targetN);
-    flyThroughCaptured = captureAt(game, player, landIdx);
-    if (flyThroughCaptured) pushLog(game, `${player.name} sent an opponent plane back to the hangar!`);
+    const captureResult = captureAt(game, player, landIdx);
+    flyThroughCaptured = captureResult.captured;
+    allCapturedPlayers.push(...captureResult.capturedPlayers);
     if (targetN !== GAS_TRIGGER_N) {
       pushLog(game, `${player.name} landed on their own color and jumped ahead!`);
     }
@@ -273,9 +280,15 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
     const jumpDestN = pending.reachedViaAutoJump ? GAS_DESTINATION_N : GAS_DESTINATION_N + OWN_COLOR_STEP;
     const jumpIdx = pending.reachedViaAutoJump ? destIdx : ringIndex(player.color, GAS_DESTINATION_N + OWN_COLOR_STEP);
 
-    if (captureAt(game, player, triggerIdx)) captured = true;
-    if (captureAt(game, player, destIdx)) captured = true;
-    if (!pending.reachedViaAutoJump && captureAt(game, player, jumpIdx)) captured = true;
+    let capturedPlayers = [];
+    const triggerResult = captureAt(game, player, triggerIdx);
+    if (triggerResult.captured) { captured = true; capturedPlayers.push(...triggerResult.capturedPlayers); }
+    const destResult = captureAt(game, player, destIdx);
+    if (destResult.captured) { captured = true; capturedPlayers.push(...destResult.capturedPlayers); }
+    if (!pending.reachedViaAutoJump) {
+      const jumpResult = captureAt(game, player, jumpIdx);
+      if (jumpResult.captured) { captured = true; capturedPlayers.push(...jumpResult.capturedPlayers); }
+    }
 
     // Shortcut also captures planes at home space 3 in the diagonally opposite color
     const playerColorIdx = COLORS.indexOf(player.color);
@@ -287,11 +300,14 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
         if (op.n === RING_SPAN + 3) {
           op.n = 0;
           captured = true;
+          capturedPlayers.push(other.name);
         }
       }
     }
 
-    if (captured) pushLog(game, `${player.name}'s shortcut sent an opponent plane back to the hangar!`);
+    if (captured && capturedPlayers.length > 0) {
+      pushLog(game, `${player.name}'s shortcut sent ${capturedPlayers.join(' and ')}'s plane back to the hangar!`);
+    }
     plane.n = jumpDestN;
     pushLog(game, `${player.name} took the gas-station shortcut!`);
   } else {
