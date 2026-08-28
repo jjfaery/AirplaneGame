@@ -249,7 +249,8 @@ function applyMove(game, planeIdx) {
   const resolved = resolveRingLanding(targetN);
   if (resolved.pending) {
     plane.n = GAS_TRIGGER_N; // provisionally sits at the trigger cell while deciding
-    game.awaitingGasChoice = { planeIdx, declineN: resolved.declineN, capturedOnArrival: flyThroughCaptured };
+    const reachedViaAutoJump = isOwnColorN(targetN);
+    game.awaitingGasChoice = { planeIdx, declineN: resolved.declineN, capturedOnArrival: flyThroughCaptured, reachedViaAutoJump };
     pushLog(game, `${player.name} reached a gas station — choose to fly the shortcut or continue normally.`);
     return { pending: true };
   }
@@ -275,12 +276,12 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
     // Only capture at 4 specific cells: trigger, landing, jump, and home space 3
     const triggerIdx = ringIndex(player.color, GAS_TRIGGER_N);
     const destIdx = ringIndex(player.color, GAS_DESTINATION_N);
-    const jumpDestN = GAS_DESTINATION_N + OWN_COLOR_STEP;
-    const jumpIdx = ringIndex(player.color, jumpDestN);
+    const jumpDestN = pending.reachedViaAutoJump ? GAS_DESTINATION_N : GAS_DESTINATION_N + OWN_COLOR_STEP;
+    const jumpIdx = pending.reachedViaAutoJump ? destIdx : ringIndex(player.color, GAS_DESTINATION_N + OWN_COLOR_STEP);
 
     if (captureAt(game, player, triggerIdx)) captured = true;
     if (captureAt(game, player, destIdx)) captured = true;
-    if (captureAt(game, player, jumpIdx)) captured = true;
+    if (!pending.reachedViaAutoJump && captureAt(game, player, jumpIdx)) captured = true;
 
     if (captured) pushLog(game, `${player.name}'s shortcut sent an opponent plane back to the hangar!`);
     plane.n = jumpDestN;
