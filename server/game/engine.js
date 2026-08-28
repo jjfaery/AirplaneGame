@@ -164,7 +164,7 @@ function captureAt(game, player, ringIdx) {
 // n (move fully resolved) or a pending-choice descriptor.
 function resolveRingLanding(n) {
   let pos = n;
-  if (isOwnColorN(pos) && pos !== GAS_TRIGGER_N) {
+  if (isOwnColorN(pos) && pos !== GAS_TRIGGER_N && pos !== RING_SPAN) {
     pos += OWN_COLOR_STEP;
   }
   if (pos === GAS_TRIGGER_N) {
