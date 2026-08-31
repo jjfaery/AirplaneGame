@@ -242,6 +242,9 @@ function applyMove(game, planeIdx) {
     const captureResult = captureAt(game, player, landIdx);
     flyThroughCaptured = captureResult.captured;
     allCapturedPlayers.push(...captureResult.capturedPlayers);
+    if (captureResult.captured && captureResult.capturedPlayers.length > 0) {
+      pushLog(game, `${player.name} sent ${captureResult.capturedPlayers.join(' and ')}'s plane back to the hangar!`);
+    }
     if (targetN !== GAS_TRIGGER_N) {
       pushLog(game, `${player.name} landed on their own color and jumped ahead!`);
     }
