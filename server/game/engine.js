@@ -324,7 +324,13 @@ function resolveGasChoice(game, planeIdx, useShortcut) {
     justFinishedPlane = true;
   } else if (plane.n >= 1 && plane.n <= RING_SPAN) {
     const idx = ringIndex(player.color, plane.n);
-    if (captureAt(game, player, idx)) captured = true;
+    const captureResult = captureAt(game, player, idx);
+    if (captureResult.captured) {
+      captured = true;
+      if (captureResult.capturedPlayers.length > 0) {
+        pushLog(game, `${player.name} sent ${captureResult.capturedPlayers.join(' and ')}'s plane back to the hangar!`);
+      }
+    }
   }
 
   const allHome = player.planes.every((p) => p.n === FINISHED_N);
